@@ -6,10 +6,39 @@
 
 package Broker;
 
+import jade.Auction;
+
 /**
  *
  * @author Karol
  */
-public class BrokerAuction {
+public class BrokerAuction 
+{
     
+    private Auction Auction;
+    public BrokerAuctionState AuctionState;
+    private int BrokerAuctionId;
+
+    
+    public BrokerAuction(Auction auction, int id)
+    {
+        Auction = auction;
+        AuctionState = AuctionState.Created;
+        BrokerAuctionId = id;
+    }
+    
+    /**
+     * @return the Auction
+     */
+    public Auction getAuction() 
+    {
+        return Auction;
+    }
+
+    /**
+     * @return the BrokerAuctionId
+     */
+    public int getBrokerAuctionId() {
+        return BrokerAuctionId;
+    }
 }
