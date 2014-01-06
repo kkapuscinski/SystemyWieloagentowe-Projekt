@@ -4,12 +4,19 @@
  * and open the template in the editor.
  */
 
-package Seller;
+package jade;
+
+import java.io.Serializable;
 
 /**
  *
  * @author Karol
  */
-public enum SellerAuctionState {
-    Created, SentToBroker, AcceptedByBroker, NotSold, Sold 
+public class Bid implements Serializable {
+    public float Value;
+    
+    public Bid(float value)
+    {
+        Value = value;
+    }
 }

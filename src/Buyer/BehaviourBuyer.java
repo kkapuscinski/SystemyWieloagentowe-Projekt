@@ -1,3 +1,6 @@
+package Buyer;
+
+import Buyer.AgentBuyer;
 import jade.content.lang.sl.SLCodec;
 import jade.core.AID;
 import jade.core.Agent;
@@ -57,7 +60,7 @@ public class BehaviourBuyer extends SimpleBehaviour {
 	}
 
 	private void askForBook() {
-	sendMsg(ACLMessage.REQUEST, agent.getTargetBookTitle());
+	
 	}
 
 	private void buyBook() {

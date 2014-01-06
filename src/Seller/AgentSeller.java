@@ -1,8 +1,9 @@
 package Seller;
 
 import Seller.BehaviourSeller;
-import jade.Auction;
-import jade.Auction;
+import jade.AgentExtension;
+import jade.AuctionParameters;
+import jade.AuctionParameters;
 import jade.ProductType;
 import jade.ProductType;
 import jade.content.lang.Codec;
@@ -35,7 +36,7 @@ public class AgentSeller extends Agent
             ProductType[] values = ProductType.values();
             ProductType prodtype = values[random.nextInt(5)];
             int amountOfProduct = random.nextInt(20);
-            Auction tmpAuction = new Auction(i, prodtype, amountOfProduct, amountOfProduct*20, amountOfProduct*40, amountOfProduct*20, 1, this.getAID());
+            AuctionParameters tmpAuction = new AuctionParameters(i, prodtype, amountOfProduct, amountOfProduct*20, amountOfProduct*40, amountOfProduct*20, 1, this.getAID());
             Auctions.add(new SellerAuction(tmpAuction));
         }
 
@@ -43,9 +44,8 @@ public class AgentSeller extends Agent
         Object[] args = getArguments();
         getContentManager().registerLanguage(Codec);
 
-        DFRegister("seller", this);
+        AgentExtension.DFRegister(this, "Seller");
         
-        BrokerAID = findBroker();
         try {
             Thread.sleep(15000);
         } catch (InterruptedException ex) {
@@ -66,7 +66,7 @@ public class AgentSeller extends Agent
         DFAgentDescription template = new DFAgentDescription();
         template.setName( agent.getAID() ); 
         ServiceDescription sd  = new ServiceDescription();
-        sd.setType(typAgenta );
+        sd.setType(typAgenta);
         sd.setName( agent.getName() );
         template.addServices(sd);
 
@@ -76,27 +76,4 @@ public class AgentSeller extends Agent
         } 
         catch (FIPAException fe) { fe.printStackTrace(); }	
     }
-    
-    private AID findBroker()
-	{
-            DFAgentDescription template = new DFAgentDescription();
-            ServiceDescription sd = new ServiceDescription();
-            sd.setType("Broker");
-            template.addServices(sd);
-            AID brokerAID = null;
-            try {
-        	DFAgentDescription[] result = DFService.search(this, template); 
-        	
-                if(result.length>0)
-                    {
-                        brokerAID= result[0].getName();
-                    } 
-            }
-                catch (FIPAException fe) {
-                fe.printStackTrace();
-            }
-            return brokerAID;
-	}
-    
-    
 }

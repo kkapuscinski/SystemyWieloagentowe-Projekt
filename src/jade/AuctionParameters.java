@@ -13,7 +13,7 @@ import java.io.Serializable;
  *
  * @author Karol
  */
-public class Auction implements Serializable
+public class AuctionParameters implements Serializable
 {
     public int Id;
     public ProductType Product;
@@ -23,8 +23,9 @@ public class Auction implements Serializable
     public float AuctionMinimalPrice;
     public float MinimalStep;
     public AID SellerAID;
+    public float SoldPrice;
     
-    public Auction(int id, ProductType product, int amount, float easp, float dasp, float amp,  float minimalStep, AID sellerAID)
+    public AuctionParameters(int id, ProductType product, int amount, float easp, float dasp, float amp,  float minimalStep, AID sellerAID)
     {
         Id = id;
         Product = product;

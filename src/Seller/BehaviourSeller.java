@@ -1,6 +1,6 @@
 package Seller;
 
-import jade.Auction;
+import jade.AuctionParameters;
 import jade.content.lang.sl.SLCodec;
 import jade.core.AID;
 import jade.core.behaviours.SimpleBehaviour;
@@ -31,21 +31,27 @@ public class BehaviourSeller extends SimpleBehaviour
             switch(State)
             {
                 case(0):
-                    for (int i = 0; i < Agent.Auctions.size(); i++) 
+                    MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchConversationId("auction-proposal"), MessageTemplate.MatchPerformative(ACLMessage.CFP));
+                    ACLMessage cfp = Agent.blockingReceive(mt, 500);
+                    if(cfp != null)
                     {
-                        ACLMessage msg = new ACLMessage(ACLMessage.PROPOSE);
-                        msg.setLanguage(Agent.Codec.getName());
-                        msg.addReceiver(Agent.BrokerAID);
-                        try 
+                        Agent.BrokerAID = cfp.getSender();
+                        for (int i = 0; i < Agent.Auctions.size(); i++) 
                         {
-                            msg.setContentObject(Agent.Auctions.get(i).getAuction());
-                            Agent.send(msg);
-                            Agent.Auctions.get(i).AuctionState = AuctionState.SentToBroker;
-                        } catch (Exception ex) 
-                        {
-                            ex.printStackTrace();
+                            ACLMessage msg = cfp.createReply();
+                            msg.setPerformative(ACLMessage.PROPOSE);
+                            try 
+                            {
+                                msg.setContentObject(Agent.Auctions.get(i).getAuction());
+                                Agent.send(msg);
+                                Agent.Auctions.get(i).AuctionState = SellerAuctionState.SentToBroker;
+                            } catch (Exception ex) 
+                            {
+                                ex.printStackTrace();
+                            }
                         }
                     }
+                    
                     State++;
                     break;
                 case(1):
@@ -73,14 +79,14 @@ public class BehaviourSeller extends SimpleBehaviour
                             // zapisz informacje o powodzeniu i czekaj na zakończenie aukcji
                             try 
                             {
-                                Auction receivedAuction = (Auction)receivedMessage.getContentObject();
+                                AuctionParameters receivedAuction = (AuctionParameters)receivedMessage.getContentObject();
                                 for (Iterator<SellerAuction> it = Agent.Auctions.iterator(); it.hasNext();) {
                                     SellerAuction tmpSAuction = it.next();
                                     if (tmpSAuction.getAuction().SellerAID == Agent.getAID()) 
                                     {
                                         if(tmpSAuction.getAuction().Id == receivedAuction.Id)
                                         {
-                                            tmpSAuction.AuctionState = AuctionState.AcceptedByBroker;
+                                            tmpSAuction.AuctionState = SellerAuctionState.AcceptedByBroker;
                                         }
                                     }
                                     else
@@ -99,19 +105,23 @@ public class BehaviourSeller extends SimpleBehaviour
                         {
                             // nie znam przyczyny dlaczego miało by się tak stać
                         }
+                        else if(msgPerformative == ACLMessage.FAILURE)
+                        {
+                         //aukcja zakończyła się negatywnie   
+                        }
                         else if(msgPerformative == ACLMessage.INFORM)
                         {
                             //aukcja została zakończona pozytywnie
                             try 
                             {
-                                Auction receivedAuction = (Auction)receivedMessage.getContentObject();
+                                AuctionParameters receivedAuction = (AuctionParameters)receivedMessage.getContentObject();
                                 for (Iterator<SellerAuction> it = Agent.Auctions.iterator(); it.hasNext();) {
                                     SellerAuction tmpSAuction = it.next();
                                     if (tmpSAuction.getAuction().SellerAID == Agent.getAID()) 
                                     {
                                         if(tmpSAuction.getAuction().Id == receivedAuction.Id)
                                         {
-                                            tmpSAuction.AuctionState = AuctionState.Sold;
+                                            tmpSAuction.AuctionState = SellerAuctionState.Sold;
                                         }
                                     }
                                     else
@@ -148,7 +158,7 @@ public class BehaviourSeller extends SimpleBehaviour
                         for (Iterator<SellerAuction> it = Agent.Auctions.iterator(); it.hasNext();) 
                         {
                             SellerAuction tmpSAuction = it.next();
-                            if(!(tmpSAuction.AuctionState == AuctionState.Sold || tmpSAuction.AuctionState == AuctionState.NotSold))
+                            if(!(tmpSAuction.AuctionState == SellerAuctionState.Sold || tmpSAuction.AuctionState == SellerAuctionState.NotSold))
                             {
                                 auctionEnd = false;
                             }

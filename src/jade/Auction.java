@@ -6,33 +6,27 @@
 
 package jade;
 
-import jade.core.AID;
 import java.io.Serializable;
 
 /**
  *
  * @author Karol
  */
-public class Auction implements Serializable
-{
+public class Auction implements Serializable {
     public int Id;
     public ProductType Product;
+    public AuctionType AuctionType;
     public int Amount;
-    public float EnglishAuctionStartingPrice;
-    public float DutchAuctionStartingPrice;
-    public float AuctionMinimalPrice;
     public float MinimalStep;
-    public AID SellerAID;
     
-    public Auction(int id, ProductType product, int amount, float easp, float dasp, float amp,  float minimalStep, AID sellerAID)
+    public Auction(int id, ProductType product, AuctionType auctionType, int amount, float minimalStep)
     {
         Id = id;
         Product = product;
+        AuctionType = auctionType;
         Amount = amount;
-        EnglishAuctionStartingPrice = easp;
-        DutchAuctionStartingPrice = dasp;
-        AuctionMinimalPrice = amp;
         MinimalStep = minimalStep;
-        SellerAID = sellerAID;
+        
     }
+    
 }

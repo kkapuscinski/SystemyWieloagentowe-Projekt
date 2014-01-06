@@ -7,6 +7,11 @@
 package Broker;
 
 import jade.Auction;
+import jade.AuctionParameters;
+import jade.AuctionType;
+import jade.Bid;
+import jade.core.AID;
+import java.util.Random;
 
 /**
  *
@@ -15,30 +20,25 @@ import jade.Auction;
 public class BrokerAuction 
 {
     
-    private Auction Auction;
+    public AuctionParameters AuctionParameters;
     public BrokerAuctionState AuctionState;
-    private int BrokerAuctionId;
+    public int BrokerAuctionId;
+    public Auction Auction;
+    public Bid HighestBid;
+    public AID HighestBidder;
+    public Bid SecondHighestBid; // tylko do vickereya
 
     
-    public BrokerAuction(Auction auction, int id)
+    public BrokerAuction(AuctionParameters auctionParameters, int id)
     {
-        Auction = auction;
+        AuctionParameters = auctionParameters;
         AuctionState = AuctionState.Created;
         BrokerAuctionId = id;
-    }
-    
-    /**
-     * @return the Auction
-     */
-    public Auction getAuction() 
-    {
-        return Auction;
+        Random random = new Random();
+        AuctionType[] values = AuctionType.values();
+        AuctionType aucttype = values[random.nextInt(3)];
+        Auction = new Auction(id, AuctionParameters.Product, aucttype, AuctionParameters.Amount, AuctionParameters.MinimalStep);
+        
     }
 
-    /**
-     * @return the BrokerAuctionId
-     */
-    public int getBrokerAuctionId() {
-        return BrokerAuctionId;
-    }
 }

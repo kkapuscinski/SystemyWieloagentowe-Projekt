@@ -4,12 +4,12 @@
  * and open the template in the editor.
  */
 
-package Seller;
+package jade;
 
 /**
  *
  * @author Karol
  */
-public enum SellerAuctionState {
-    Created, SentToBroker, AcceptedByBroker, NotSold, Sold 
+public enum AuctionType {
+    Vikerey, Dutch, English
 }

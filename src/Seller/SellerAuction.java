@@ -6,7 +6,7 @@
 
 package Seller;
 
-import jade.Auction;
+import jade.AuctionParameters;
 
 /**
  *
@@ -14,18 +14,18 @@ import jade.Auction;
  */
 public class SellerAuction 
 {
-    private Auction Auction;
-    public  AuctionState AuctionState;
+    private AuctionParameters Auction;
+    public  SellerAuctionState AuctionState;
 
     /**
      * @return the Auction
      */
-    public Auction getAuction() 
+    public AuctionParameters getAuction() 
     {
         return Auction;
     }
     
-    public SellerAuction(Auction auction)
+    public SellerAuction(AuctionParameters auction)
     {
         Auction = auction;
         AuctionState = AuctionState.Created;
