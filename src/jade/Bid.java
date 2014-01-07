@@ -6,6 +6,7 @@
 
 package jade;
 
+import jade.core.AID;
 import java.io.Serializable;
 
 /**
@@ -14,9 +15,11 @@ import java.io.Serializable;
  */
 public class Bid implements Serializable {
     public float Value;
+    public AID Bidder;
     
-    public Bid(float value)
+    public Bid(float value, AID buyer)
     {
         Value = value;
+        Bidder = buyer;
     }
 }

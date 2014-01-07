@@ -24,9 +24,9 @@ public class BrokerAuction
     public BrokerAuctionState AuctionState;
     public int BrokerAuctionId;
     public Auction Auction;
-    public Bid HighestBid;
-    public AID HighestBidder;
-    public Bid SecondHighestBid; // tylko do vickereya
+    public Bid HighestBid; // aukcja angielska/vickereya
+    public Bid SecondHighestBid; // aukcja vickereya
+    public Bid ActualBid; // aukcja holenderska
 
     
     public BrokerAuction(AuctionParameters auctionParameters, int id)

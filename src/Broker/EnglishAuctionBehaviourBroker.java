@@ -11,6 +11,8 @@ import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -32,7 +34,6 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
         State = 0;
         NoPropositionOffers = 0;
         ActiveAuction = activeAuction;
-        ActiveAuction.HighestBid = new Bid(ActiveAuction.AuctionParameters.EnglishAuctionStartingPrice);
     }
 
    
@@ -44,6 +45,7 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
             case(0):
                 // wysyłamy CFP do kupujących
                 mt = myAgent.sendAuctionCFPToBuyers(ActiveAuction);
+                State++;
                 break;
             case(1):
                 // odbieramy propozycje kupna i wysyłamy informacje o najwyższej aktualnej propozycji
@@ -67,10 +69,10 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
                             if( (ActiveAuction.HighestBid == null || tmpbid.Value > ActiveAuction.HighestBid.Value) && (tmpbid.Value - ActiveAuction.HighestBid.Value) > ActiveAuction.Auction.MinimalStep)
                             {
                                 ActiveAuction.HighestBid = tmpbid;
-                                ActiveAuction.HighestBidder = reply.getSender();
                             }
                         } 
                         catch (UnreadableException ex) {
+                            Logger.getLogger(AuctionManagerBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
                     else
@@ -80,7 +82,7 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
                     reply = myAgent.receive(mt);
                 }
                 
-                myAgent.sendAuctionHighestBidToBuyers(ActiveAuction);
+                myAgent.sendAuctionActualBidToBuyers(ActiveAuction);
                 
                 break;
             case(2):
@@ -88,13 +90,15 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
                 if(ActiveAuction.HighestBid.Value > ActiveAuction.AuctionParameters.AuctionMinimalPrice)
                 {
                     ActiveAuction.AuctionState = BrokerAuctionState.Sold;
+                    myAgent.sendAuctionSoldEnd(ActiveAuction);
                 }
                 else
                 {
                     ActiveAuction.AuctionState = BrokerAuctionState.NotSold;
+                    myAgent.sendAuctionNotSoldEnd(ActiveAuction);
                 }
                 
-                myAgent.sendAuctionEnd(ActiveAuction);
+                
                 
                 this.stop();
                 

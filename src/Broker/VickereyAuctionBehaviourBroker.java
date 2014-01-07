@@ -6,8 +6,13 @@
 
 package Broker;
 
+import jade.Bid;
 import jade.core.behaviours.TickerBehaviour;
+import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.UnreadableException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -32,7 +37,65 @@ class VickereyAuctionBehaviourBroker extends TickerBehaviour {
 
     @Override
     protected void onTick() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        switch(State)
+        {
+            case(0):
+                // wysyłamy CFP do kupujących
+                mt = myAgent.sendAuctionCFPToBuyers(ActiveAuction);
+                State++;
+                break;
+            case(1):
+                // odbieramy propozycje kupna i wysyłamy informacje o najwyższej aktualnej propozycji
+                ACLMessage reply = myAgent.receive(mt);
+                
+                if(reply == null)
+                {
+                    NoPropositionOffers++;
+                    if(NoPropositionOffers > 30) State++;
+                    return;
+                }
+                
+                while (reply != null) {                    
+                    // Reply received
+                    if (reply.getPerformative() == ACLMessage.PROPOSE) 
+                    {
+                        try 
+                        {
+                            Bid tmpbid = (Bid) reply.getContentObject();
+                            if( (ActiveAuction.HighestBid == null || tmpbid.Value > ActiveAuction.HighestBid.Value))
+                            {
+                                ActiveAuction.SecondHighestBid = ActiveAuction.HighestBid;
+                                ActiveAuction.HighestBid = tmpbid;
+                            }
+                        } 
+                        catch (UnreadableException ex) {
+                            Logger.getLogger(AuctionManagerBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                    else
+                    {
+                        // nieznany komunikat
+                    }
+                    reply = myAgent.receive(mt);
+                }
+                break;
+            case(2):
+                // koniec aukcji wysyłamy informację do wszystkich o zakończeniu aukcji, informacja do zwycięzcy(jeśli był) oraz do sprzedającego
+                if(ActiveAuction.HighestBid.Value > ActiveAuction.AuctionParameters.AuctionMinimalPrice)
+                {
+                    ActiveAuction.AuctionState = BrokerAuctionState.Sold;
+                    myAgent.sendAuctionSoldEnd(ActiveAuction);
+                }
+                else
+                {
+                    ActiveAuction.AuctionState = BrokerAuctionState.NotSold;
+                    myAgent.sendAuctionNotSoldEnd(ActiveAuction);
+                }
+                
+                this.stop();
+                
+                break;
+        }
     }
 
     

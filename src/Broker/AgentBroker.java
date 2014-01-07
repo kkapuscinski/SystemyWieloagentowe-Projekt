@@ -9,6 +9,7 @@ package Broker;
 import Seller.AgentSeller;
 import jade.AgentExtension;
 import jade.AuctionParameters;
+import jade.AuctionType;
 import jade.Bid;
 import jade.content.lang.Codec;
 import jade.content.lang.sl.SLCodec;
@@ -81,7 +82,7 @@ public class AgentBroker extends Agent {
     }
     
     
-    public void sendAuctionHighestBidToBuyers(BrokerAuction auction)
+    public void sendAuctionActualBidToBuyers(BrokerAuction auction)
     {
         ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
         for (int i = 0; i < Buyers.size(); ++i) {
@@ -89,18 +90,71 @@ public class AgentBroker extends Agent {
         }
         msg.setConversationId("Auction-"+auction.Auction.Id);
         try {
-            msg.setContentObject(auction.HighestBid);
+            if(auction.Auction.AuctionType == AuctionType.English)
+            {
+                msg.setContentObject(auction.HighestBid);
+            }
+            else
+            {
+                msg.setContentObject(auction.ActualBid);
+            }
             send(msg);
         } catch (IOException ex) {
             Logger.getLogger(AuctionManagerBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    void sendAuctionEnd(BrokerAuction auction) 
+    void sendAuctionNotSoldEnd(BrokerAuction auction)
     {
+        
+        // widomość do kupców o tym że nie wygrali aukcji
         ACLMessage msgForLossers = new ACLMessage(ACLMessage.FAILURE);
         for (int i = 0; i < Buyers.size(); ++i) {
-            if(!(Buyers.get(i) == auction.HighestBidder) || auction.AuctionState == BrokerAuctionState.NotSold)
+                msgForLossers.addReceiver(Buyers.get(i));
+        }
+        msgForLossers.setConversationId("Auction-"+auction.Auction.Id);
+        send(msgForLossers);
+        
+        // wiadomość dla sprzedawcy, że towar się nie sprzedał
+        ACLMessage msgForSeller = new ACLMessage(ACLMessage.FAILURE);
+        msgForSeller.addReceiver(auction.AuctionParameters.SellerAID);
+        msgForSeller.setConversationId("Auction-"+auction.AuctionParameters.Id);
+
+        try {
+            msgForSeller.setContentObject(auction.AuctionParameters);
+            send(msgForSeller);
+        } catch (IOException ex) {
+            Logger.getLogger(AuctionManagerBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    
+    void sendAuctionSoldEnd(BrokerAuction auction) 
+    {
+        AID winner = null;
+        
+        switch(auction.Auction.AuctionType)
+        {
+            case English:
+                auction.AuctionParameters.SoldPrice = auction.HighestBid.Value;
+                winner = auction.HighestBid.Bidder;
+                break;
+
+            case Dutch:
+                auction.AuctionParameters.SoldPrice = auction.ActualBid.Value;
+                winner = auction.ActualBid.Bidder;
+                break;
+
+            case Vikerey:
+                auction.AuctionParameters.SoldPrice = auction.SecondHighestBid.Value;
+                winner = auction.HighestBid.Bidder;
+                break;
+        }
+        
+        // widomość do kupców o tym że nie wygrali aukcji
+        ACLMessage msgForLossers = new ACLMessage(ACLMessage.FAILURE);
+        for (int i = 0; i < Buyers.size(); ++i) {
+            if(!(Buyers.get(i) == winner))
             {
                 msgForLossers.addReceiver(Buyers.get(i));
             }
@@ -108,40 +162,27 @@ public class AgentBroker extends Agent {
         msgForLossers.setConversationId("Auction-"+auction.Auction.Id);
         send(msgForLossers);
         
-        if(auction.AuctionState == BrokerAuctionState.Sold)
-        {
-            ACLMessage msgForWinner = new ACLMessage(ACLMessage.INFORM);
-            msgForWinner.addReceiver(auction.HighestBidder);
-            msgForWinner.setConversationId("Auction-"+auction.Auction.Id);
-            try {
-                msgForWinner.setContentObject(auction.HighestBid);
-                send(msgForWinner);
-            } catch (IOException ex) {
-                Logger.getLogger(AuctionManagerBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            auction.AuctionParameters.SoldPrice = auction.HighestBid.Value;
-            ACLMessage msgForSeller = new ACLMessage(ACLMessage.INFORM);
-            msgForSeller.addReceiver(auction.AuctionParameters.SellerAID);
-            msgForSeller.setConversationId("Auction-"+auction.AuctionParameters.Id);
-            try {
-                msgForSeller.setContentObject(auction.AuctionParameters);
-                send(msgForSeller);
-            } catch (IOException ex) {
-                Logger.getLogger(AuctionManagerBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        // widomość do wygranego kupcy z stawką jaką zapłaci
+        ACLMessage msgForWinner = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+        msgForWinner.addReceiver(winner);
+        msgForWinner.setConversationId("Auction-"+auction.Auction.Id);
+        try {
+            msgForWinner.setContentObject(auction.AuctionParameters.SoldPrice);
+            send(msgForWinner);
+        } catch (IOException ex) {
+            Logger.getLogger(AuctionManagerBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
         }
-        else
-        {
-            ACLMessage msgForSeller = new ACLMessage(ACLMessage.FAILURE);
-            msgForSeller.addReceiver(auction.AuctionParameters.SellerAID);
-            msgForSeller.setConversationId("Auction-"+auction.AuctionParameters.Id);
-            
-            try {
-                msgForSeller.setContentObject(auction.AuctionParameters);
-                send(msgForSeller);
-            } catch (IOException ex) {
-                Logger.getLogger(AuctionManagerBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
-            }
+
+        
+        // wiadomość do sprzedawcy o tym za ile sprzedano towar
+        ACLMessage msgForSeller = new ACLMessage(ACLMessage.INFORM);
+        msgForSeller.addReceiver(auction.AuctionParameters.SellerAID);
+        msgForSeller.setConversationId("Auction-"+auction.AuctionParameters.Id);
+        try {
+            msgForSeller.setContentObject(auction.AuctionParameters);
+            send(msgForSeller);
+        } catch (IOException ex) {
+            Logger.getLogger(AuctionManagerBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }
