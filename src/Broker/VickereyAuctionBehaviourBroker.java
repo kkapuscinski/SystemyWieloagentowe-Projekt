@@ -22,17 +22,16 @@ class VickereyAuctionBehaviourBroker extends TickerBehaviour {
 
     private AgentBroker myAgent;
     private int State;
-    private BrokerAuction ActiveAuction;
     private MessageTemplate mt;
     private int NoPropositionOffers;
     
-    VickereyAuctionBehaviourBroker(AgentBroker agent, BrokerAuction activeAuction, long period)
+    VickereyAuctionBehaviourBroker(AgentBroker agent,  long period)
     {
         super(agent, period);
         myAgent = agent;
         State = 0;
         NoPropositionOffers = 0;
-        ActiveAuction = activeAuction;
+        
     }
 
     @Override
@@ -41,7 +40,7 @@ class VickereyAuctionBehaviourBroker extends TickerBehaviour {
         {
             case(0):
                 // wysyłamy CFP do kupujących
-                mt = myAgent.sendAuctionCFPToBuyers(ActiveAuction);
+                mt = myAgent.sendAuctionCFPToBuyers(myAgent.ActiveAuction);
                 State++;
                 break;
             case(1):
@@ -51,7 +50,7 @@ class VickereyAuctionBehaviourBroker extends TickerBehaviour {
                 if(reply == null)
                 {
                     NoPropositionOffers++;
-                    if(NoPropositionOffers > 30) State++;
+                    if(NoPropositionOffers > 5) State++;
                     return;
                 }
                 
@@ -62,10 +61,18 @@ class VickereyAuctionBehaviourBroker extends TickerBehaviour {
                         try 
                         {
                             Bid tmpbid = (Bid) reply.getContentObject();
-                            if( (ActiveAuction.HighestBid == null || tmpbid.Value > ActiveAuction.HighestBid.Value))
+                            if( (myAgent.ActiveAuction.HighestBid == null || tmpbid.Value > myAgent.ActiveAuction.HighestBid.Value))
                             {
-                                ActiveAuction.SecondHighestBid = ActiveAuction.HighestBid;
-                                ActiveAuction.HighestBid = tmpbid;
+                                if(myAgent.ActiveAuction.HighestBid == null)
+                                {
+                                    myAgent.ActiveAuction.SecondHighestBid = tmpbid;
+                                }
+                                else
+                                {
+                                    myAgent.ActiveAuction.SecondHighestBid = myAgent.ActiveAuction.HighestBid;
+                                }
+                                
+                                myAgent.ActiveAuction.HighestBid = tmpbid;
                             }
                         } 
                         catch (UnreadableException ex) {
@@ -81,15 +88,15 @@ class VickereyAuctionBehaviourBroker extends TickerBehaviour {
                 break;
             case(2):
                 // koniec aukcji wysyłamy informację do wszystkich o zakończeniu aukcji, informacja do zwycięzcy(jeśli był) oraz do sprzedającego
-                if(ActiveAuction.HighestBid.Value > ActiveAuction.AuctionParameters.AuctionMinimalPrice)
+                if(myAgent.ActiveAuction.HighestBid != null && myAgent.ActiveAuction.HighestBid.Value > myAgent.ActiveAuction.AuctionParameters.AuctionMinimalPrice)
                 {
-                    ActiveAuction.AuctionState = BrokerAuctionState.Sold;
-                    myAgent.sendAuctionSoldEnd(ActiveAuction);
+                    myAgent.ActiveAuction.AuctionState = BrokerAuctionState.Sold;
+                    myAgent.sendAuctionSoldEnd(myAgent.ActiveAuction);
                 }
                 else
                 {
-                    ActiveAuction.AuctionState = BrokerAuctionState.NotSold;
-                    myAgent.sendAuctionNotSoldEnd(ActiveAuction);
+                    myAgent.ActiveAuction.AuctionState = BrokerAuctionState.NotSold;
+                    myAgent.sendAuctionNotSoldEnd(myAgent.ActiveAuction);
                 }
                 
                 this.stop();

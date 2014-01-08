@@ -30,7 +30,7 @@ class AcceptOffersBehaviourBroker extends SimpleBehaviour
     {
         myAgent = agentBroker;
         State = 0;
-        endDate = new Date(new Date().getTime() + (1000 * 30)); // kiedy kończymy przyjmować oferty
+        endDate = new Date(new Date().getTime() + (1000 * 10)); // kiedy kończymy przyjmować oferty
     }
 
     @Override
@@ -89,7 +89,7 @@ class AcceptOffersBehaviourBroker extends SimpleBehaviour
     {
         if(State == 2)
         {
-            System.out.println("Broker-agent "+myAgent.getAID().getName()+" wiating for proposal has ended.");
+            System.out.println("Broker-agent "+myAgent.getAID().getName()+" wiating for sell proposal has ended. Starting auctions");
             myAgent.addBehaviour(new AuctionManagerBehaviourBroker(myAgent));
             return true;
         }

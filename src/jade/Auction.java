@@ -18,14 +18,16 @@ public class Auction implements Serializable {
     public AuctionType AuctionType;
     public int Amount;
     public float MinimalStep;
+    public float StartingPrice;
     
-    public Auction(int id, ProductType product, AuctionType auctionType, int amount, float minimalStep)
+    public Auction(int id, ProductType product, AuctionType auctionType, int amount, float minimalStep, float startingPrice)
     {
         Id = id;
         Product = product;
         AuctionType = auctionType;
         Amount = amount;
         MinimalStep = minimalStep;
+        StartingPrice = startingPrice;
         
     }
     

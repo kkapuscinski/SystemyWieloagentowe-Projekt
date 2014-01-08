@@ -22,18 +22,16 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
 
     private AgentBroker myAgent;
     private int State;
-    private BrokerAuction ActiveAuction;
     private MessageTemplate mt;
     private int NoPropositionOffers;
     
 
-    EnglishAuctionBehaviourBroker(AgentBroker agent, BrokerAuction activeAuction, long period)
+    EnglishAuctionBehaviourBroker(AgentBroker agent, long period)
     {
         super(agent, period);
         myAgent = agent;
         State = 0;
         NoPropositionOffers = 0;
-        ActiveAuction = activeAuction;
     }
 
    
@@ -44,7 +42,7 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
         {
             case(0):
                 // wysyłamy CFP do kupujących
-                mt = myAgent.sendAuctionCFPToBuyers(ActiveAuction);
+                mt = myAgent.sendAuctionCFPToBuyers(myAgent.ActiveAuction);
                 State++;
                 break;
             case(1):
@@ -66,10 +64,23 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
                         try 
                         {
                             Bid tmpbid = (Bid) reply.getContentObject();
-                            if( (ActiveAuction.HighestBid == null || tmpbid.Value > ActiveAuction.HighestBid.Value) && (tmpbid.Value - ActiveAuction.HighestBid.Value) > ActiveAuction.Auction.MinimalStep)
+                            if(myAgent.ActiveAuction.HighestBid != null)
                             {
-                                ActiveAuction.HighestBid = tmpbid;
+                                if(tmpbid.Value > myAgent.ActiveAuction.HighestBid.Value && 
+                                    (tmpbid.Value - myAgent.ActiveAuction.HighestBid.Value) > myAgent.ActiveAuction.Auction.MinimalStep)
+                                {
+                                    myAgent.ActiveAuction.HighestBid = tmpbid;
+                                }
                             }
+                            else
+                            {
+                                if(tmpbid.Value > myAgent.ActiveAuction.AuctionParameters.EnglishAuctionStartingPrice && 
+                                    (tmpbid.Value - myAgent.ActiveAuction.AuctionParameters.EnglishAuctionStartingPrice) > myAgent.ActiveAuction.Auction.MinimalStep)
+                                {
+                                    myAgent.ActiveAuction.HighestBid = tmpbid;
+                                }
+                            }
+                            
                         } 
                         catch (UnreadableException ex) {
                             Logger.getLogger(AuctionManagerBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
@@ -82,20 +93,20 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
                     reply = myAgent.receive(mt);
                 }
                 
-                myAgent.sendAuctionActualBidToBuyers(ActiveAuction);
+                myAgent.sendAuctionActualBidToBuyers(myAgent.ActiveAuction);
                 
                 break;
             case(2):
                 // koniec aukcji wysyłamy informację do wszystkich o zakończeniu aukcji, informacja do zwycięzcy(jeśli był) oraz do sprzedającego
-                if(ActiveAuction.HighestBid.Value > ActiveAuction.AuctionParameters.AuctionMinimalPrice)
+                if(myAgent.ActiveAuction.HighestBid != null && myAgent.ActiveAuction.HighestBid.Value > myAgent.ActiveAuction.AuctionParameters.AuctionMinimalPrice)
                 {
-                    ActiveAuction.AuctionState = BrokerAuctionState.Sold;
-                    myAgent.sendAuctionSoldEnd(ActiveAuction);
+                    myAgent.ActiveAuction.AuctionState = BrokerAuctionState.Sold;
+                    myAgent.sendAuctionSoldEnd(myAgent.ActiveAuction);
                 }
                 else
                 {
-                    ActiveAuction.AuctionState = BrokerAuctionState.NotSold;
-                    myAgent.sendAuctionNotSoldEnd(ActiveAuction);
+                    myAgent.ActiveAuction.AuctionState = BrokerAuctionState.NotSold;
+                    myAgent.sendAuctionNotSoldEnd(myAgent.ActiveAuction);
                 }
                 
                 

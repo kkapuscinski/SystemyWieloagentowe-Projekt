@@ -36,8 +36,22 @@ public class BrokerAuction
         BrokerAuctionId = id;
         Random random = new Random();
         AuctionType[] values = AuctionType.values();
+        //AuctionType aucttype = AuctionType.Dutch;
         AuctionType aucttype = values[random.nextInt(3)];
-        Auction = new Auction(id, AuctionParameters.Product, aucttype, AuctionParameters.Amount, AuctionParameters.MinimalStep);
+        
+        float startingPrice = 0;
+        switch(aucttype)
+        {
+            case English:
+                startingPrice = auctionParameters.EnglishAuctionStartingPrice;
+                break;
+            case Dutch:
+                startingPrice = auctionParameters.DutchAuctionStartingPrice;
+                break;
+            case Vikerey:
+                startingPrice = 0;
+        }
+        Auction = new Auction(id, AuctionParameters.Product, aucttype, AuctionParameters.Amount, AuctionParameters.MinimalStep, startingPrice);
         
     }
 

@@ -24,19 +24,17 @@ class DutchAuctionBehaviourBroker extends TickerBehaviour {
 
     private AgentBroker myAgent;
     private int State;
-    private BrokerAuction ActiveAuction;
     private MessageTemplate mt;
     private int NoPropositionOffers;
     
 
-    DutchAuctionBehaviourBroker(AgentBroker agent, BrokerAuction activeAuction, long period)
+    DutchAuctionBehaviourBroker(AgentBroker agent, long period)
     {
         super(agent, period);
         myAgent = agent;
         State = 0;
         NoPropositionOffers = 0;
-        ActiveAuction = activeAuction;
-        ActiveAuction.ActualBid = new Bid(ActiveAuction.AuctionParameters.AuctionMinimalPrice, null);
+        myAgent.ActiveAuction.ActualBid = new Bid(myAgent.ActiveAuction.AuctionParameters.DutchAuctionStartingPrice, null);
         
     }
 
@@ -46,7 +44,7 @@ class DutchAuctionBehaviourBroker extends TickerBehaviour {
         {
             case(0):
                 // wysyłamy CFP do kupujących
-                mt = myAgent.sendAuctionCFPToBuyers(ActiveAuction);
+                mt = myAgent.sendAuctionCFPToBuyers(myAgent.ActiveAuction);
                 State++;
                 break;
             case(1):
@@ -57,10 +55,10 @@ class DutchAuctionBehaviourBroker extends TickerBehaviour {
                 if(reply == null)
                 {
                     
-                    if(ActiveAuction.ActualBid.Value > ActiveAuction.AuctionParameters.AuctionMinimalPrice)
+                    if(myAgent.ActiveAuction.ActualBid.Value > myAgent.ActiveAuction.AuctionParameters.AuctionMinimalPrice)
                     {
-                        ActiveAuction.ActualBid.Value = ActiveAuction.ActualBid.Value - ActiveAuction.AuctionParameters.MinimalStep;
-                        myAgent.sendAuctionActualBidToBuyers(ActiveAuction);
+                        myAgent.ActiveAuction.ActualBid.Value = myAgent.ActiveAuction.ActualBid.Value - (myAgent.ActiveAuction.AuctionParameters.MinimalStep * myAgent.ActiveAuction.AuctionParameters.Amount);
+                        myAgent.sendAuctionActualBidToBuyers(myAgent.ActiveAuction);
                     }
                     else
                     {
@@ -74,7 +72,7 @@ class DutchAuctionBehaviourBroker extends TickerBehaviour {
                 {
                     if (reply.getPerformative() == ACLMessage.PROPOSE) 
                     {
-                        ActiveAuction.ActualBid.Bidder = reply.getSender();
+                        myAgent.ActiveAuction.ActualBid.Bidder = reply.getSender();
                         State++;
                     }
                     else
@@ -85,15 +83,15 @@ class DutchAuctionBehaviourBroker extends TickerBehaviour {
                 break;
             case(2):
                 // koniec aukcji wysyłamy informację do wszystkich o zakończeniu aukcji, informacja do zwycięzcy(jeśli był) oraz do sprzedającego
-                if(ActiveAuction.ActualBid.Value > ActiveAuction.AuctionParameters.AuctionMinimalPrice)
+                if(myAgent.ActiveAuction.ActualBid.Value > myAgent.ActiveAuction.AuctionParameters.AuctionMinimalPrice)
                 {
-                    ActiveAuction.AuctionState = BrokerAuctionState.Sold;
-                    myAgent.sendAuctionSoldEnd(ActiveAuction);
+                    myAgent.ActiveAuction.AuctionState = BrokerAuctionState.Sold;
+                    myAgent.sendAuctionSoldEnd(myAgent.ActiveAuction);
                 }
                 else
                 {
-                    ActiveAuction.AuctionState = BrokerAuctionState.NotSold;
-                    myAgent.sendAuctionNotSoldEnd(ActiveAuction);
+                    myAgent.ActiveAuction.AuctionState = BrokerAuctionState.NotSold;
+                    myAgent.sendAuctionNotSoldEnd(myAgent.ActiveAuction);
                 }
                 
                 this.stop();

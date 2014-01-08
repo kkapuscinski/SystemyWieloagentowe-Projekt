@@ -8,17 +8,11 @@ package Broker;
 
 import Seller.AgentSeller;
 import jade.AgentExtension;
-import jade.AuctionParameters;
 import jade.AuctionType;
-import jade.Bid;
 import jade.content.lang.Codec;
 import jade.content.lang.sl.SLCodec;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.domain.DFService;
-import jade.domain.FIPAException;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import java.io.IOException;
@@ -36,6 +30,7 @@ public class AgentBroker extends Agent {
     public Codec Codec = new SLCodec();
     public List<AID> Sellers;
     public List<AID> Buyers;
+    public BrokerAuction ActiveAuction;
     
     protected void setup() 
     {
@@ -47,7 +42,7 @@ public class AgentBroker extends Agent {
 
         AgentExtension.DFRegister(this, "Broker");
         try {
-            Thread.sleep(13000);
+            Thread.sleep(5000);
         } catch (InterruptedException ex) {
             Logger.getLogger(AgentSeller.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -69,7 +64,7 @@ public class AgentBroker extends Agent {
         for (int i = 0; i < Buyers.size(); ++i) {
             msg.addReceiver(Buyers.get(i));
         }
-        msg.setConversationId("Auction-"+auction.Auction.Id);
+        msg.setConversationId("Auction-Buyers-Proposals");
         msg.setReplyWith("Auction-"+System.currentTimeMillis()); // Unique value
         try {
             msg.setContentObject(auction.Auction);
@@ -81,6 +76,17 @@ public class AgentBroker extends Agent {
         return MessageTemplate.and(MessageTemplate.MatchConversationId(msg.getConversationId()),MessageTemplate.MatchInReplyTo(msg.getReplyWith()));
     }
     
+    public void sendAuctionCancelToBuyers()
+    {
+        ACLMessage msg = new ACLMessage(ACLMessage.CANCEL);
+        for (int i = 0; i < Buyers.size(); ++i) {
+            msg.addReceiver(Buyers.get(i));
+        }
+        msg.setConversationId("Auction-Buyers-Proposals");
+        send(msg);
+    }
+    
+    
     
     public void sendAuctionActualBidToBuyers(BrokerAuction auction)
     {
@@ -88,7 +94,7 @@ public class AgentBroker extends Agent {
         for (int i = 0; i < Buyers.size(); ++i) {
             msg.addReceiver(Buyers.get(i));
         }
-        msg.setConversationId("Auction-"+auction.Auction.Id);
+        msg.setConversationId("Auction-Buyers-Proposals");
         try {
             if(auction.Auction.AuctionType == AuctionType.English)
             {
@@ -112,7 +118,7 @@ public class AgentBroker extends Agent {
         for (int i = 0; i < Buyers.size(); ++i) {
                 msgForLossers.addReceiver(Buyers.get(i));
         }
-        msgForLossers.setConversationId("Auction-"+auction.Auction.Id);
+        msgForLossers.setConversationId("Auction-Buyers-Proposals");
         send(msgForLossers);
         
         // wiadomość dla sprzedawcy, że towar się nie sprzedał
@@ -159,13 +165,13 @@ public class AgentBroker extends Agent {
                 msgForLossers.addReceiver(Buyers.get(i));
             }
         }
-        msgForLossers.setConversationId("Auction-"+auction.Auction.Id);
+        msgForLossers.setConversationId("Auction-Buyers-Proposals");
         send(msgForLossers);
         
         // widomość do wygranego kupcy z stawką jaką zapłaci
         ACLMessage msgForWinner = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
         msgForWinner.addReceiver(winner);
-        msgForWinner.setConversationId("Auction-"+auction.Auction.Id);
+        msgForWinner.setConversationId("Auction-Buyers-Proposals");
         try {
             msgForWinner.setContentObject(auction.AuctionParameters.SoldPrice);
             send(msgForWinner);

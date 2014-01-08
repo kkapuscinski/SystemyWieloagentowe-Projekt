@@ -25,32 +25,25 @@ public class AgentSeller extends Agent
 {
     public  List<SellerAuction> Auctions;
     public  AID BrokerAID ;
-    public Codec Codec = new SLCodec();
 	
     protected void setup() 
     {
         
-        Auctions = new ArrayList<SellerAuction>();
+        Auctions = new ArrayList<>();
         Random random = new Random();
         for (int i = 0; i < 2; i++) {
             ProductType[] values = ProductType.values();
             ProductType prodtype = values[random.nextInt(5)];
-            int amountOfProduct = random.nextInt(20);
-            AuctionParameters tmpAuction = new AuctionParameters(i, prodtype, amountOfProduct, amountOfProduct*20, amountOfProduct*40, amountOfProduct*20, 1, this.getAID());
+            int amountOfProduct = random.nextInt(20)+1;
+            AuctionParameters tmpAuction = new AuctionParameters(i, prodtype, amountOfProduct, amountOfProduct*20, amountOfProduct*40, amountOfProduct*25, 0.5F, this.getAID());
             Auctions.add(new SellerAuction(tmpAuction));
         }
 
         System.out.println("Hello! Seller-agent "+getAID().getName()+" is ready.");
         Object[] args = getArguments();
-        getContentManager().registerLanguage(Codec);
 
         AgentExtension.DFRegister(this, "Seller");
         
-        try {
-            Thread.sleep(15000);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(AgentSeller.class.getName()).log(Level.SEVERE, null, ex);
-        }
         BehaviourSeller behaviourSeller = new BehaviourSeller(this);
         addBehaviour(behaviourSeller);
     }
@@ -61,19 +54,5 @@ public class AgentSeller extends Agent
     }
 		
 
-    public static void DFRegister(String typAgenta, Agent agent)
-    {
-        DFAgentDescription template = new DFAgentDescription();
-        template.setName( agent.getAID() ); 
-        ServiceDescription sd  = new ServiceDescription();
-        sd.setType(typAgenta);
-        sd.setName( agent.getName() );
-        template.addServices(sd);
-
-        try
-        {
-            DFService.register(agent, template );  
-        } 
-        catch (FIPAException fe) { fe.printStackTrace(); }	
-    }
+    
 }

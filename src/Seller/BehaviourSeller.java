@@ -50,9 +50,8 @@ public class BehaviourSeller extends SimpleBehaviour
                                 ex.printStackTrace();
                             }
                         }
+                        State++;
                     }
-                    
-                    State++;
                     break;
                 case(1):
                     

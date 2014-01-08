@@ -6,15 +6,7 @@
 
 package Broker;
 
-import jade.AuctionType;
-import jade.core.Agent;
 import jade.core.behaviours.SimpleBehaviour;
-import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -24,7 +16,6 @@ class AuctionManagerBehaviourBroker extends SimpleBehaviour
 {
     private AgentBroker myAgent;
     private int State;
-    private BrokerAuction ActiveAuction;
     
     
     
@@ -32,8 +23,6 @@ class AuctionManagerBehaviourBroker extends SimpleBehaviour
     {
         myAgent = agent;
         State = 0;
-        
-        
     }
 
     @Override
@@ -47,7 +36,7 @@ class AuctionManagerBehaviourBroker extends SimpleBehaviour
                 for (int i = 0; i < myAgent.Auctions.size(); i++) {
                     if(!(myAgent.Auctions.get(i).AuctionState == BrokerAuctionState.Sold || myAgent.Auctions.get(i).AuctionState == BrokerAuctionState.NotSold))
                     {
-                        ActiveAuction = myAgent.Auctions.get(i);
+                        myAgent.ActiveAuction = myAgent.Auctions.get(i);
                         AllAcuctionsHasEnded = false;
                         break;
                     }
@@ -55,20 +44,21 @@ class AuctionManagerBehaviourBroker extends SimpleBehaviour
                 if (AllAcuctionsHasEnded)
                 {
                     State = 2;
+                    return;
                 }
                 
-                switch(ActiveAuction.Auction.AuctionType)
+                switch(myAgent.ActiveAuction.Auction.AuctionType)
                 {
                     case Dutch:
-                        myAgent.addBehaviour(new DutchAuctionBehaviourBroker(myAgent, ActiveAuction, 1000));
+                        myAgent.addBehaviour(new DutchAuctionBehaviourBroker(myAgent, 1000));
                         break;
                         
                     case English:
-                        myAgent.addBehaviour(new EnglishAuctionBehaviourBroker(myAgent, ActiveAuction, 1000));
+                        myAgent.addBehaviour(new EnglishAuctionBehaviourBroker(myAgent, 1000));
                         break;
                     
                     case Vikerey:
-                        myAgent.addBehaviour(new VickereyAuctionBehaviourBroker(myAgent, ActiveAuction, 1000));
+                        myAgent.addBehaviour(new VickereyAuctionBehaviourBroker(myAgent, 200));
                         break;
                         
                 }
@@ -76,8 +66,9 @@ class AuctionManagerBehaviourBroker extends SimpleBehaviour
                 
                 break;
             case(1):
-                if((ActiveAuction.AuctionState == BrokerAuctionState.Sold || ActiveAuction.AuctionState == BrokerAuctionState.NotSold))
+                if((myAgent.ActiveAuction.AuctionState == BrokerAuctionState.Sold || myAgent.ActiveAuction.AuctionState == BrokerAuctionState.NotSold))
                 {
+                    System.out.println("Broker-agent auction"+myAgent.ActiveAuction.BrokerAuctionId+" had ended.");
                     State--;
                 }
                 break;
@@ -89,7 +80,13 @@ class AuctionManagerBehaviourBroker extends SimpleBehaviour
     public boolean done() {
         if(State == 2)
         {
+            myAgent.sendAuctionCancelToBuyers();
             System.out.println("Broker-agent "+myAgent.getAID().getName()+" All auctions had ended.");
+            
+            System.out.println("Broker-agent "+myAgent.getAID().getName()+" Status:");
+            for (int i = 0; i < myAgent.Auctions.size(); i++) {
+                System.out.println("Broker-agent "+myAgent.getAID().getName()+"auction params:"+myAgent.Auctions.get(i).AuctionParameters.Amount+", "+myAgent.Auctions.get(i).AuctionParameters.Product.toString()+" auction state:"+myAgent.Auctions.get(i).AuctionState.toString()+" sold for: "+myAgent.Auctions.get(i).AuctionParameters.SoldPrice);
+            }
             return true;
         }
         else
