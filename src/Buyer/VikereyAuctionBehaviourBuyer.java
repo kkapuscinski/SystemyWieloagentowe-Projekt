@@ -15,10 +15,7 @@ import jade.lang.acl.UnreadableException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author kkapuscinski
- */
+// zachowanie aukcji vickereya dla kupującego
 class VikereyAuctionBehaviourBuyer extends SimpleBehaviour {
     private AgentBuyer myAgent;
     private int State;
@@ -61,9 +58,8 @@ class VikereyAuctionBehaviourBuyer extends SimpleBehaviour {
                 break;
             case(1):
                 // czekamy na wiadomość od brokera
-                // inform podbito aukcję -> przejście do 0
-                // Failure aukcja się zakończyła niepowodzeniem dla tego agenta -> 2
-                // Accept_proposal agent wygrał -> 3
+                // Failure aukcja się zakończyła niepowodzeniem dla tego agenta 
+                // Accept_proposal agent wygrał 
                 ACLMessage msg = myAgent.blockingReceive(mt, 500);
                 if(msg != null)
                 {

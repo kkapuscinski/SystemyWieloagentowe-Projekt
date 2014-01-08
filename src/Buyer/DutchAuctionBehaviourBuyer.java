@@ -14,10 +14,7 @@ import jade.lang.acl.UnreadableException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author kkapuscinski
- */
+//zachowanie kupującego dla aukcji holenderskiej
 class DutchAuctionBehaviourBuyer extends SimpleBehaviour {
     private AgentBuyer myAgent;
     private int State;

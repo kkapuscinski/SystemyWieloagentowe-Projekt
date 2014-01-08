@@ -6,10 +6,7 @@
 
 package jade;
 
-/**
- *
- * @author Karol
- */
+//Typy aukcji
 public enum AuctionType {
     Vikerey, Dutch, English
 }

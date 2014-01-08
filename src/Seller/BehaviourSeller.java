@@ -1,28 +1,20 @@
 package Seller;
 
 import jade.AuctionParameters;
-import jade.content.lang.sl.SLCodec;
-import jade.core.AID;
 import jade.core.behaviours.SimpleBehaviour;
-import jade.domain.DFService;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-
+// Klasa zachowania Agenta sprzedawcy
 public class BehaviourSeller extends SimpleBehaviour 
 {
-	private AgentSeller Agent;
-        int State = 0;
+	private AgentSeller myAgent; // Agent na rzecz którego wykonywane jest zachowanie
+        int State = 0; // stan maszyny stanowej
 	public BehaviourSeller(AgentSeller agentSeller) 
         {
-            Agent = agentSeller;
+            myAgent = agentSeller;
 	}
 
 	@Override
@@ -31,20 +23,21 @@ public class BehaviourSeller extends SimpleBehaviour
             switch(State)
             {
                 case(0):
+                    // oczekujemy na wiadomość CFP od brokera aby wysłać mu nasze propozycje aukcji
                     MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchConversationId("auction-proposal"), MessageTemplate.MatchPerformative(ACLMessage.CFP));
-                    ACLMessage cfp = Agent.blockingReceive(mt, 500);
+                    ACLMessage cfp = myAgent.blockingReceive(mt, 500);
                     if(cfp != null)
                     {
-                        Agent.BrokerAID = cfp.getSender();
-                        for (int i = 0; i < Agent.Auctions.size(); i++) 
+                        myAgent.BrokerAID = cfp.getSender();
+                        for (int i = 0; i < myAgent.Auctions.size(); i++) 
                         {
                             ACLMessage msg = cfp.createReply();
                             msg.setPerformative(ACLMessage.PROPOSE);
                             try 
                             {
-                                msg.setContentObject(Agent.Auctions.get(i).getAuction());
-                                Agent.send(msg);
-                                Agent.Auctions.get(i).AuctionState = SellerAuctionState.SentToBroker;
+                                msg.setContentObject(myAgent.Auctions.get(i).getAuction());
+                                myAgent.send(msg);
+                                myAgent.Auctions.get(i).AuctionState = SellerAuctionState.SentToBroker;
                             } catch (Exception ex) 
                             {
                                 ex.printStackTrace();
@@ -54,24 +47,11 @@ public class BehaviourSeller extends SimpleBehaviour
                     }
                     break;
                 case(1):
-                    
-                    ACLMessage receivedMessage = Agent.blockingReceive(500);
+                    // Po wysłaniu Aukcji oczekujemy potwierdzenia przyjęcia aukcji
+                    MessageTemplate mt1 = MessageTemplate.and(MessageTemplate.MatchConversationId("auction-proposal"), MessageTemplate.MatchSender(myAgent.BrokerAID));
+                    ACLMessage receivedMessage = myAgent.blockingReceive(mt1, 500);
                     if(receivedMessage != null)
                     {
-                      
-                        if(receivedMessage.getSender() != Agent.BrokerAID)
-                        {
-                            //nieznany nadawca
-                            ACLMessage reply = receivedMessage.createReply();
-                            reply.setPerformative(ACLMessage.UNKNOWN);
-                            try 
-                            {
-                                Agent.send(reply);
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                            }
-
-                        }
                         int msgPerformative = receivedMessage.getPerformative();
                         if(msgPerformative == ACLMessage.ACCEPT_PROPOSAL)
                         {
@@ -79,18 +59,56 @@ public class BehaviourSeller extends SimpleBehaviour
                             try 
                             {
                                 AuctionParameters receivedAuction = (AuctionParameters)receivedMessage.getContentObject();
-                                for (Iterator<SellerAuction> it = Agent.Auctions.iterator(); it.hasNext();) {
+                                boolean everyAuctionAccepted = true;
+                                for (Iterator<SellerAuction> it = myAgent.Auctions.iterator(); it.hasNext();) {
                                     SellerAuction tmpSAuction = it.next();
-                                    if (tmpSAuction.getAuction().SellerAID == Agent.getAID()) 
+                                    if (tmpSAuction.getAuction().SellerAID == myAgent.getAID()) 
                                     {
                                         if(tmpSAuction.getAuction().Id == receivedAuction.Id)
                                         {
                                             tmpSAuction.AuctionState = SellerAuctionState.AcceptedByBroker;
                                         }
+                                        if(tmpSAuction.AuctionState != SellerAuctionState.AcceptedByBroker)
+                                        {
+                                            everyAuctionAccepted = false;
+                                        }
                                     }
-                                    else
+
+                                }
+                                if(everyAuctionAccepted)
+                                {
+                                    State++;
+                                }
+                            } 
+                            catch (UnreadableException ex) 
+                            {
+                                ex.printStackTrace();
+                            }
+                        }
+                    }
+                    
+                    break;
+                case(2):
+                    // czekamy na informacje o zakończeniu aukcji
+                    MessageTemplate mt2 = MessageTemplate.and(MessageTemplate.MatchConversationId("auction-proposal"), MessageTemplate.MatchSender(myAgent.BrokerAID));
+                    ACLMessage receivedMessage2 = myAgent.blockingReceive(mt2, 500);
+                    if(receivedMessage2 != null)
+                    {
+                        int msgPerformative = receivedMessage2.getPerformative();
+                        if(msgPerformative == ACLMessage.FAILURE)
+                        {
+                         //aukcja nie została sprzedana oznaczamy ten fakt
+                         try 
+                            {
+                                AuctionParameters receivedAuction = (AuctionParameters)receivedMessage2.getContentObject();
+                                for (Iterator<SellerAuction> it = myAgent.Auctions.iterator(); it.hasNext();) {
+                                    SellerAuction tmpSAuction = it.next();
+                                    if (tmpSAuction.getAuction().SellerAID == myAgent.getAID()) 
                                     {
-                                        // aukcja nie tego sprzedawcy
+                                        if(tmpSAuction.getAuction().Id == receivedAuction.Id)
+                                        {
+                                            tmpSAuction.AuctionState = SellerAuctionState.NotSold;
+                                        }
                                     }
 
                                 }
@@ -100,33 +118,21 @@ public class BehaviourSeller extends SimpleBehaviour
                                 ex.printStackTrace();
                             }
                         }
-                        else if(msgPerformative == ACLMessage.REJECT_PROPOSAL)
-                        {
-                            // nie znam przyczyny dlaczego miało by się tak stać
-                        }
-                        else if(msgPerformative == ACLMessage.FAILURE)
-                        {
-                         //aukcja zakończyła się negatywnie   
-                        }
                         else if(msgPerformative == ACLMessage.INFORM)
                         {
-                            //aukcja została zakończona pozytywnie
+                            //aukcja została sprzedana oznaczamy ten fakt
                             try 
                             {
-                                AuctionParameters receivedAuction = (AuctionParameters)receivedMessage.getContentObject();
-                                for (Iterator<SellerAuction> it = Agent.Auctions.iterator(); it.hasNext();) {
+                                AuctionParameters receivedAuction = (AuctionParameters)receivedMessage2.getContentObject();
+                                for (Iterator<SellerAuction> it = myAgent.Auctions.iterator(); it.hasNext();) {
                                     SellerAuction tmpSAuction = it.next();
-                                    if (tmpSAuction.getAuction().SellerAID == Agent.getAID()) 
+                                    if (tmpSAuction.getAuction().SellerAID == myAgent.getAID()) 
                                     {
                                         if(tmpSAuction.getAuction().Id == receivedAuction.Id)
                                         {
                                             tmpSAuction.AuctionState = SellerAuctionState.Sold;
                                         }
                                     }
-                                    else
-                                    {
-                                        // aukcja nie tego sprzedawcy
-                                    }
 
                                 }
                             } 
@@ -135,26 +141,9 @@ public class BehaviourSeller extends SimpleBehaviour
                                 ex.printStackTrace();
                             }
                         }
-                        else if(msgPerformative == ACLMessage.FAILURE)
-                        {
-                            //aukcja zakończyła się nie powodzeniem TODO
-                        }
-                        else
-                        {
-                            // nieznany rodzaj komunikatu
-                            ACLMessage reply = receivedMessage.createReply();
-                            reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
-                            try 
-                            {
-                                Agent.send(reply);
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                            }
-
-                        }
-
+                        // sprawdzamy czy wszystkie aukcje się zakończyły
                         boolean auctionEnd = true;
-                        for (Iterator<SellerAuction> it = Agent.Auctions.iterator(); it.hasNext();) 
+                        for (Iterator<SellerAuction> it = myAgent.Auctions.iterator(); it.hasNext();) 
                         {
                             SellerAuction tmpSAuction = it.next();
                             if(!(tmpSAuction.AuctionState == SellerAuctionState.Sold || tmpSAuction.AuctionState == SellerAuctionState.NotSold))
@@ -163,6 +152,7 @@ public class BehaviourSeller extends SimpleBehaviour
                             }
 
                         }
+                        // jeśli tak to kończymy behaviour
                         if(auctionEnd)
                         {
                             State++;
@@ -177,9 +167,10 @@ public class BehaviourSeller extends SimpleBehaviour
 	@Override
 	public boolean done() 
         {
-            if(State == 2)
+            // stan 3 oznacza że aukcje się zakończyły i można zakończyć behaviour
+            if(State == 3)
             {
-                System.out.println("Seller-agent "+Agent.getAID().getName()+" auctions has ended.");
+                System.out.println("Seller-agent "+myAgent.getAID().getName()+" auctions has ended.");
                 return true;
             }
             else

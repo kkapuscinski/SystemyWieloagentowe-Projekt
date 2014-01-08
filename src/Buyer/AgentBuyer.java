@@ -14,22 +14,23 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
+// klasa opisująca kupującego
 public class AgentBuyer extends Agent 
 {
-    public EnumMap<ProductType, Integer> ProductsToBuy;
-    public EnumMap<ProductType, Float> ProductsRealValue;
-    public float Cash;
-    public float Aggressiveness;
-    public Random Random;
-    public Auction ActiveAuction;
-    public ACLMessage ActiveauctionCfpMsg;
-    public List<Auction> WonAuctions;
+    public EnumMap<ProductType, Integer> ProductsToBuy; // lista produktów do kupna wraz z ilością zapotrzebowania
+    public EnumMap<ProductType, Float> ProductsRealValue; // lista rzeczywistych wartości produktów dla agenta
+    public float Cash; // ilość pieniędzy posiadanych przez agenta
+    public float Aggressiveness; // Agresywność agenta
+    public Random Random; // generator liczb losowych
+    public Auction ActiveAuction; // aktualnie prowadzona aukcja
+    public ACLMessage ActiveauctionCfpMsg; // Wiadomość CFP od brokera dla aktualnej aukcji
+    public List<Auction> WonAuctions; // lista wygranych aukcji
 
     protected void setup() 
     {
         System.out.println("Hello! Buyer-agent "+getAID().getName()+" is ready.");
         WonAuctions = new ArrayList<>();
+        // losujemy produkty do kupna oraz ich zapotrzebowanie
         ProductsToBuy = new EnumMap<>(ProductType.class);
         ProductsRealValue = new EnumMap<>(ProductType.class);
         Random = new Random();
@@ -49,7 +50,7 @@ public class AgentBuyer extends Agent
         }
         
         
-        
+        // argumenty (ilość pieniędzy i agresywność
         Object[] args = getArguments();
         if (args != null && args.length > 0) 
         {
@@ -63,6 +64,7 @@ public class AgentBuyer extends Agent
         }
         
         AgentExtension.DFRegister(this, "Buyer");
+        // odczekujemy 10 sekund aż broker przyjmie oferty sprzedaży od sprzedających
         try {
             Thread.sleep(10000);
         } catch (InterruptedException ex) {
@@ -76,7 +78,8 @@ public class AgentBuyer extends Agent
     {
         System.out.println("Buyer-agent "+getAID().getName()+" terminating.");
     }
-	
+
+    //metoda wysyłająca bid do brokera
     public void SendAuctionBid(Bid myBid)
     {
         ACLMessage msg = ActiveauctionCfpMsg.createReply();

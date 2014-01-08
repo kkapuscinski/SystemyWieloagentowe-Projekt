@@ -14,16 +14,13 @@ import jade.lang.acl.UnreadableException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Karol
- */
+// zachowanie brokera dla aukcji vickereya
 class VickereyAuctionBehaviourBroker extends TickerBehaviour {
 
     private AgentBroker myAgent;
     private int State;
     private MessageTemplate mt;
-    private int NoPropositionOffers;
+    private int NoPropositionOffers; // brak ofert przez określony czas
     
     VickereyAuctionBehaviourBroker(AgentBroker agent,  long period)
     {
@@ -44,16 +41,17 @@ class VickereyAuctionBehaviourBroker extends TickerBehaviour {
                 State++;
                 break;
             case(1):
-                // odbieramy propozycje kupna i wysyłamy informacje o najwyższej aktualnej propozycji
+                // odbieramy propozycje kupna 
                 ACLMessage reply = myAgent.receive(mt);
                 
+                // jeśli brak ofert liczymy do 5 sekund i kończymy aukcję
                 if(reply == null)
                 {
                     NoPropositionOffers++;
                     if(NoPropositionOffers > 5) State++;
                     return;
                 }
-                
+                // odbieramy propozycje i ustawiamy najwyższy bid oraz drugi w kolejności
                 while (reply != null) {                    
                     // Reply received
                     if (reply.getPerformative() == ACLMessage.PROPOSE) 

@@ -6,11 +6,11 @@ import jade.core.behaviours.SimpleBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
-import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+// zachowanie zarządzające wyborem typu aukcji
 public class ManagerBehaviourBuyer extends SimpleBehaviour {
 
     private AgentBuyer myAgent;
@@ -51,6 +51,8 @@ public class ManagerBehaviourBuyer extends SimpleBehaviour {
                             && myAgent.ProductsToBuy.get(myAgent.ActiveAuction.Product) > 0) // i ilość do kupienia jest większa niż 0
                             && myAgent.ActiveAuction.StartingPrice + myAgent.ActiveAuction.MinimalStep < myAgent.Cash) // cena wywoławcza + minimalny krok jest mniejsza niz ilosć posiadanych pieniędzy
                     {
+                        
+                        // startujemy zachowanie odpowiedniej aukcji
                         switch(myAgent.ActiveAuction.AuctionType)
                         {
                             case English:
@@ -68,7 +70,7 @@ public class ManagerBehaviourBuyer extends SimpleBehaviour {
                     }
                     else
                     {
-                        // agent nie bierze udziału w aukcji
+                        // agent nie bierze udziału w aukcji jeśli nie spełnia warunków
                         myAgent.ActiveAuction = null;
                         System.out.println("Buyer-agent "+myAgent.getAID().getName()+" Is not intrested in auction.");
                     }

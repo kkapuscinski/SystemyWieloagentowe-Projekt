@@ -8,10 +8,7 @@ package Seller;
 
 import jade.AuctionParameters;
 
-/**
- *
- * @author Karol
- */
+// kontener aukcji dla sprzedającego zawiera parametry aukcji i aktualny stan aukcji
 public class SellerAuction 
 {
     private AuctionParameters Auction;

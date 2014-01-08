@@ -12,7 +12,7 @@ public class BootAgents {
 		 List<String> bootAgents = new ArrayList<String>(0);
 		 bootAgents.add("-gui");
                  bootAgents.add("Seller:Seller.AgentSeller()");
-		 bootAgents.add("Seller2:Seller.AgentSeller()");
+		 //bootAgents.add("Seller2:Seller.AgentSeller()");
                  //bootAgents.add("Seller3:Seller.AgentSeller()");
                  //bootAgents.add("Seller4:Seller.AgentSeller()");
                  bootAgents.add("Broker:Broker.AgentBroker()");

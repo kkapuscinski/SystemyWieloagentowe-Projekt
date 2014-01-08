@@ -8,14 +8,11 @@ package Broker;
 
 import jade.core.behaviours.SimpleBehaviour;
 
-/**
- *
- * @author Karol
- */
+// zachowanie brokera zarządzające prowadzeniem wszystkich aukcji
 class AuctionManagerBehaviourBroker extends SimpleBehaviour 
 {
     private AgentBroker myAgent;
-    private int State;
+    private int State; // stan maszyny stanowej
     
     
     
@@ -31,7 +28,7 @@ class AuctionManagerBehaviourBroker extends SimpleBehaviour
         switch(State)
         {
             case(0):
-                // wybieramy pierwszą nie zakończoną aukcję i uruchamiamy odpowiedni beahviurAukcji
+                // wybieramy pierwszą nie zakończoną aukcję i uruchamiamy odpowiedni beahviur dla typu aukcji
                 boolean AllAcuctionsHasEnded = true;
                 for (int i = 0; i < myAgent.Auctions.size(); i++) {
                     if(!(myAgent.Auctions.get(i).AuctionState == BrokerAuctionState.Sold || myAgent.Auctions.get(i).AuctionState == BrokerAuctionState.NotSold))
@@ -66,9 +63,10 @@ class AuctionManagerBehaviourBroker extends SimpleBehaviour
                 
                 break;
             case(1):
+                // jeśli aktywna aukcja się zakończyła ponownie wybieramy kolejną aukcję do prowadzenia
                 if((myAgent.ActiveAuction.AuctionState == BrokerAuctionState.Sold || myAgent.ActiveAuction.AuctionState == BrokerAuctionState.NotSold))
                 {
-                    System.out.println("Broker-agent auction"+myAgent.ActiveAuction.BrokerAuctionId+" had ended.");
+                    System.out.println("Broker-agent auction"+myAgent.ActiveAuction.BrokerAuctionId+" has ended.");
                     State--;
                 }
                 break;
@@ -80,7 +78,10 @@ class AuctionManagerBehaviourBroker extends SimpleBehaviour
     public boolean done() {
         if(State == 2)
         {
+            // wyślij informację do kupujących że wszystkie aukcje się zakończyły
             myAgent.sendAuctionCancelToBuyers();
+            
+            // print przeprowadzonych aukcji i ich parametrów
             System.out.println("Broker-agent "+myAgent.getAID().getName()+" All auctions had ended.");
             
             System.out.println("Broker-agent "+myAgent.getAID().getName()+" Status:");

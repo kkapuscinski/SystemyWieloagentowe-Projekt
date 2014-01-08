@@ -6,10 +6,7 @@
 
 package Seller;
 
-/**
- *
- * @author Karol
- */
+// Typy stanów aukcji dla sprzedającego
 public enum SellerAuctionState {
     Created, SentToBroker, AcceptedByBroker, NotSold, Sold 
 }

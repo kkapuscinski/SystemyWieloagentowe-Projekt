@@ -11,26 +11,24 @@ import jade.core.behaviours.SimpleBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
+import java.io.IOException;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Karol
- */
+// zachowanie przyjmujące oferty sprzedaży
 class AcceptOffersBehaviourBroker extends SimpleBehaviour
 {
-    private AgentBroker myAgent;
-    private int State;
-    private Date endDate;
-    private MessageTemplate mt;
+    private AgentBroker myAgent; // agent zachowania
+    private int State; // stan maszyny stanowej
+    private Date endDate; // data zakończenia przyjmowania ofert sprzedaży
+    private MessageTemplate mt; //  wzór odpowiedzi na zapytanie CFP
 
     AcceptOffersBehaviourBroker(AgentBroker agentBroker) 
     {
         myAgent = agentBroker;
         State = 0;
-        endDate = new Date(new Date().getTime() + (1000 * 10)); // kiedy kończymy przyjmować oferty
+        endDate = new Date(new Date().getTime() + (1000 * 10)); // kiedy kończymy przyjmować oferty. 10 sekund
     }
 
     @Override
@@ -38,6 +36,7 @@ class AcceptOffersBehaviourBroker extends SimpleBehaviour
         switch(State)
             {
                 case(0):
+                    // wysyłamy CFP do sprzedających o propozycje sprzedaży
                     ACLMessage msg = new ACLMessage(ACLMessage.CFP);
                     for (int i = 0; i < myAgent.Sellers.size(); ++i) {
                         msg.addReceiver(myAgent.Sellers.get(i));
@@ -53,8 +52,10 @@ class AcceptOffersBehaviourBroker extends SimpleBehaviour
                     break;
                     
                 case(1):
+                    // jeśli koniec składania ofert to kończymy zachowanie
                     if(endDate.after(new Date()))
                     {
+                        //wpp sprawdzamy czy jest jakaś oferta
                         ACLMessage reply = myAgent.receive(mt);
                         if (reply != null) 
                         {
@@ -64,9 +65,16 @@ class AcceptOffersBehaviourBroker extends SimpleBehaviour
                                 try 
                                 {
                                     myAgent.Auctions.add(new BrokerAuction((AuctionParameters) reply.getContentObject(), myAgent.Auctions.size()));
+                                    ACLMessage reply2 = reply.createReply();
+                                    reply2.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                                    reply2.setConversationId("auction-proposal");
+                                    reply2.setContentObject(reply.getContentObject());
+                                    myAgent.send(reply2);
                                 } 
                                 catch (UnreadableException ex) 
                                 {
+                                    Logger.getLogger(AcceptOffersBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
+                                } catch (IOException ex) {
                                     Logger.getLogger(AcceptOffersBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             }

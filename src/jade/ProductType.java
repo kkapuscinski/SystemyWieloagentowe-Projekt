@@ -6,10 +6,7 @@
 
 package jade;
 
-/**
- *
- * @author Karol
- */
+// typy produktów
 public enum ProductType {
     Apple, Pear, Banana, Pineapple, Orange
 }

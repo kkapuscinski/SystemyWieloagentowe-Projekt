@@ -16,16 +16,12 @@ import jade.lang.acl.UnreadableException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Karol
- */
+// zachowanie brokera dla aukcji holenderskiej
 class DutchAuctionBehaviourBroker extends TickerBehaviour {
 
     private AgentBroker myAgent;
     private int State;
     private MessageTemplate mt;
-    private int NoPropositionOffers;
     
 
     DutchAuctionBehaviourBroker(AgentBroker agent, long period)
@@ -33,8 +29,7 @@ class DutchAuctionBehaviourBroker extends TickerBehaviour {
         super(agent, period);
         myAgent = agent;
         State = 0;
-        NoPropositionOffers = 0;
-        myAgent.ActiveAuction.ActualBid = new Bid(myAgent.ActiveAuction.AuctionParameters.DutchAuctionStartingPrice, null);
+        myAgent.ActiveAuction.ActualBid = new Bid(myAgent.ActiveAuction.AuctionParameters.DutchAuctionStartingPrice, null); // ustawiam startowy bid na wartość startową aukcji
         
     }
 
@@ -74,10 +69,6 @@ class DutchAuctionBehaviourBroker extends TickerBehaviour {
                     {
                         myAgent.ActiveAuction.ActualBid.Bidder = reply.getSender();
                         State++;
-                    }
-                    else
-                    {
-                        //nieznany komunikat
                     }
                 }
                 break;

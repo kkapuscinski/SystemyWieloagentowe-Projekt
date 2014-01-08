@@ -9,13 +9,10 @@ package jade;
 import jade.core.AID;
 import java.io.Serializable;
 
-/**
- *
- * @author Karol
- */
+// Klasa opisująca bid dla aukcji
 public class Bid implements Serializable {
-    public float Value;
-    public AID Bidder;
+    public float Value; // wartość bidu
+    public AID Bidder; // AID Kupica licytującego
     
     public Bid(float value, AID buyer)
     {

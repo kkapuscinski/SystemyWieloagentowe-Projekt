@@ -21,33 +21,34 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Karol
- */
+//Klasa opisująca Agenta brokera aukcji
 public class AgentBroker extends Agent {
-    public List<BrokerAuction> Auctions;
+    public List<BrokerAuction> Auctions; // lista aukcji prowadzonych przez brokera
     public Codec Codec = new SLCodec();
-    public List<AID> Sellers;
-    public List<AID> Buyers;
-    public BrokerAuction ActiveAuction;
+    public List<AID> Sellers; // Lista Agentów sprzedawców
+    public List<AID> Buyers; // Lista Agentów kupców
+    public BrokerAuction ActiveAuction; // Aktywnie prowadzona aukcja przez brokera
     
     protected void setup() 
     {
         Auctions = new ArrayList<>();
 
         System.out.println("Hello! Broker-agent "+getAID().getName()+" is ready.");
-        Object[] args = getArguments();
         getContentManager().registerLanguage(Codec);
 
         AgentExtension.DFRegister(this, "Broker");
+        // opóźniamy lekko brokera
         try {
             Thread.sleep(5000);
         } catch (InterruptedException ex) {
             Logger.getLogger(AgentSeller.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        // pobieramy z DF agentów sprzedających i kupujących
         Sellers = AgentExtension.findAgentsByType(this, "Seller");
         Buyers = AgentExtension.findAgentsByType(this, "Buyer");
+        
+        // uruchamiamy zachowanie zajmujące sięprzyjmowaniem ofert od sprzedawców
         AcceptOffersBehaviourBroker behaviourBroker = new AcceptOffersBehaviourBroker(this);
         addBehaviour(behaviourBroker);
     }
@@ -57,6 +58,7 @@ public class AgentBroker extends Agent {
         System.out.println("Broker-agent "+getAID().getName()+" terminating.");
     }
     
+    // Metoda wysyłająca CFP do kupujących
     public MessageTemplate sendAuctionCFPToBuyers(BrokerAuction auction)
     {
        // wysyłamy informację o aukcji do kupców o rozpoczęciu aukcji 
@@ -76,6 +78,7 @@ public class AgentBroker extends Agent {
         return MessageTemplate.and(MessageTemplate.MatchConversationId(msg.getConversationId()),MessageTemplate.MatchInReplyTo(msg.getReplyWith()));
     }
     
+    // Metoda wysyłająca informację do kupujących o zakończeniu wszystkich aukcji
     public void sendAuctionCancelToBuyers()
     {
         ACLMessage msg = new ACLMessage(ACLMessage.CANCEL);
@@ -87,7 +90,7 @@ public class AgentBroker extends Agent {
     }
     
     
-    
+    // metoda wysyłającą aktualny bid dla aukcji
     public void sendAuctionActualBidToBuyers(BrokerAuction auction)
     {
         ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
@@ -110,6 +113,7 @@ public class AgentBroker extends Agent {
         }
     }
 
+    // metoda wysyłająca wiadomości do kupujących i sprzedającego o braku zwycięzcy
     void sendAuctionNotSoldEnd(BrokerAuction auction)
     {
         
@@ -124,7 +128,7 @@ public class AgentBroker extends Agent {
         // wiadomość dla sprzedawcy, że towar się nie sprzedał
         ACLMessage msgForSeller = new ACLMessage(ACLMessage.FAILURE);
         msgForSeller.addReceiver(auction.AuctionParameters.SellerAID);
-        msgForSeller.setConversationId("Auction-"+auction.AuctionParameters.Id);
+        msgForSeller.setConversationId("auction-proposal");
 
         try {
             msgForSeller.setContentObject(auction.AuctionParameters);
@@ -134,7 +138,7 @@ public class AgentBroker extends Agent {
         }
     }
     
-    
+    // metoda wysyłająca wiadomość do kupców i sprzedającego o tym że aukcja zakończyłą się pomyślnie
     void sendAuctionSoldEnd(BrokerAuction auction) 
     {
         AID winner = null;
@@ -183,7 +187,7 @@ public class AgentBroker extends Agent {
         // wiadomość do sprzedawcy o tym za ile sprzedano towar
         ACLMessage msgForSeller = new ACLMessage(ACLMessage.INFORM);
         msgForSeller.addReceiver(auction.AuctionParameters.SellerAID);
-        msgForSeller.setConversationId("Auction-"+auction.AuctionParameters.Id);
+        msgForSeller.setConversationId("auction-proposal");
         try {
             msgForSeller.setContentObject(auction.AuctionParameters);
             send(msgForSeller);

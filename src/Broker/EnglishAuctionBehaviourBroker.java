@@ -14,16 +14,13 @@ import jade.lang.acl.UnreadableException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Karol
- */
+// zachowanie brokera dla aukcji angielskiej
 class EnglishAuctionBehaviourBroker extends TickerBehaviour {
 
     private AgentBroker myAgent;
     private int State;
     private MessageTemplate mt;
-    private int NoPropositionOffers;
+    private int NoPropositionOffers; // brak ofert przez określony czas
     
 
     EnglishAuctionBehaviourBroker(AgentBroker agent, long period)
@@ -56,7 +53,7 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
                     if(NoPropositionOffers > 3) State++;
                     return;
                 }
-                
+                //dla każdej propozycji sprawdzamy czy jest większa niż aktualna propozycja i ustawiamy jąjako najwyższą
                 while (reply != null) {                    
                     // Reply received
                     if (reply.getPerformative() == ACLMessage.PROPOSE) 
@@ -64,6 +61,7 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
                         try 
                         {
                             Bid tmpbid = (Bid) reply.getContentObject();
+                            
                             if(myAgent.ActiveAuction.HighestBid != null)
                             {
                                 if(tmpbid.Value > myAgent.ActiveAuction.HighestBid.Value && 
@@ -86,13 +84,9 @@ class EnglishAuctionBehaviourBroker extends TickerBehaviour {
                             Logger.getLogger(AuctionManagerBehaviourBroker.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
-                    else
-                    {
-                        // nieznany komunikat
-                    }
                     reply = myAgent.receive(mt);
                 }
-                
+                // wysyłamy informację do kupujących o najwyższym aktualnym bidzie
                 myAgent.sendAuctionActualBidToBuyers(myAgent.ActiveAuction);
                 
                 break;

@@ -16,15 +16,12 @@ import jade.lang.acl.UnreadableException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author kkapuscinski
- */
+// zachowanie dla aukcji angielskiej kupującego
 class EnglishAuctionBehaviourBuyer extends SimpleBehaviour {
     private AgentBuyer myAgent;
     private int State;
-    private Bid MyBid;
-    private Bid HighestBid;
+    private Bid MyBid; // bid tego Agenta
+    private Bid HighestBid; // najwyższy aktualny bid
     private MessageTemplate mt;
 
     public EnglishAuctionBehaviourBuyer(AgentBuyer agent) {

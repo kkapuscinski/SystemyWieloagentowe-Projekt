@@ -13,17 +13,14 @@ import jade.Bid;
 import jade.core.AID;
 import java.util.Random;
 
-/**
- *
- * @author Karol
- */
+// kontener aukcji brokera
 public class BrokerAuction 
 {
     
-    public AuctionParameters AuctionParameters;
-    public BrokerAuctionState AuctionState;
-    public int BrokerAuctionId;
-    public Auction Auction;
+    public AuctionParameters AuctionParameters; // parametry aukcji od sprzedawcy
+    public BrokerAuctionState AuctionState; // stan aukcji u brokera
+    public int BrokerAuctionId; // Id aukcji brokera
+    public Auction Auction; // obiekt aukcji przeznaczony dla kupujących
     public Bid HighestBid; // aukcja angielska/vickereya
     public Bid SecondHighestBid; // aukcja vickereya
     public Bid ActualBid; // aukcja holenderska
@@ -34,12 +31,14 @@ public class BrokerAuction
         AuctionParameters = auctionParameters;
         AuctionState = AuctionState.Created;
         BrokerAuctionId = id;
+        // losujemy typ aukcji
         Random random = new Random();
         AuctionType[] values = AuctionType.values();
         //AuctionType aucttype = AuctionType.Dutch;
         AuctionType aucttype = values[random.nextInt(3)];
         
         float startingPrice = 0;
+        // ustawiamy cenę startową aukcji kupującego w zależności od typu aukcji
         switch(aucttype)
         {
             case English:

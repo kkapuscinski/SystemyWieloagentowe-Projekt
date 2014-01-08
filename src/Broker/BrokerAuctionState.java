@@ -6,10 +6,7 @@
 
 package Broker;
 
-/**
- *
- * @author Karol
- */
+// stany aukcji u brokera
 public enum BrokerAuctionState {
     Created, Started, NotSold, Sold
 }
